@@ -3,10 +3,12 @@ from math import *
 import pandas as pd
 
 import xlwt
+import numpy as np
 
-from xlwt import Workbook
 
-# tenseur c
+###############################################################################################"""
+materiau = "example_academic_labo_meca"
+
 C = {
     "11": 210,
     "22": 209,
@@ -31,17 +33,14 @@ C = {
     "12": 129
 }
 
-# for i in range(6):
-#    for j in range(6):
-#        C[str(i+1)+str(j+1)] = float(input("Entre le coefficient C_" + str(i+1)+str(j+1)))
-# afficher pour vérification
-
-# calcul des dix huits invarriants suivant l'axe OZ
-
 def calcul_des_invariants(C:dict):
+    """
+    : param C: tensor C
+    : return: list of 18 invariants as dict with I_i the dict keys
+    """
     I_1 = C["11"]
 
-    I_2 = C["11"] + C["33"]
+    I_2 = C["22"] + C["33"]
 
     I_3 = C["66"]
 
@@ -70,9 +69,9 @@ def calcul_des_invariants(C:dict):
     I_15 = C["44"] * C["55"] * C["66"] + 2 * C["45"] * C["46"] * C["56"] - C["44"] * C["56"] ** 2 - C["55"] * C["46"] ** 2 - \
            C["66"] * C["45"] ** 2
 
-    I_16 = C["24"] ** 2 + C["25"] + C["34"] ** 2 + C["35"] ** 2
+    I_16 = C["24"] ** 2 + C["25"] ** 2 + C["34"] ** 2 + C["35"] ** 2
 
-    I_17 = C["24"] * C["35"] - C["24"] * C["34"]
+    I_17 = C["24"] * C["35"] - C["25"] * C["34"]
 
     I_18 = C["14"] * (C["25"] * C["36"] - C["26"] * C["35"]) + C["15"] * (C["26"] * C["34"] - C["24"] * C["36"]) + C[
         "16"] * (C["24"] * C["35"] - C["25"] * C["34"])
@@ -84,21 +83,13 @@ def calcul_des_invariants(C:dict):
         invariant_P8["I_" + str(i + 1)] = round(invariants[i], 8)
     return invariant_P8
 
-'''
-# Ranger les invariants du plus petit au plus grand
-Invariant_trier = sorted(Invariant_P6.items(), key=lambda t: t[1])
-# min_I= plus petit invariant
-min_I = Invariant_trier[0][1]
-# max_I= plus grand invariant
-max_I = Invariant_trier[-1][1]
-'''
-
 
 # Conditions and distance calculation for each class
 
 def Distance_Isotropic(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I: dict
+    :return:  distance_to_isotropic, list_invariants_approached, list_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -108,28 +99,28 @@ def Distance_Isotropic(I: dict = {"I": 0}):
     invariants_approached = {}
     """
     Pour le cas isotrope, les conditions sont définis sur les invariants I_2, I_3, I_6, I_10, I_11, I_12, I_13, I_14, I_15;
-    le reste des invariants doivent être nuls
+    les autres invariants doivent être nuls
     
     Les valeurs de ces invaraints approchés sont ajouter au dictionnaire invariants_approached
     """
 
     invariants_approached["I_2ap"] = 2 * I["I_1"]
-    invariants_approached["I_3ap"] = 0.5 * I["I_4"]
+    invariants_approached["I_3ap"] = (1 / 2) * I["I_4"]
     invariants_approached["I_6ap"] = 2 * (I["I_1"] - I["I_4"]) ** 2
     invariants_approached["I_10ap"] = 2 * (I["I_1"] ** 2 + (I["I_1"] - I["I_4"]) ** 2)
     invariants_approached["I_11ap"] = I["I_1"] ** 2 - (I["I_1"] - I["I_4"]) ** 2
     invariants_approached["I_12ap"] = I["I_1"] ** 3 + 2 * (I["I_1"] - I["I_4"]) ** 3 - 3 * I["I_1"] * (
             I["I_1"] - I["I_4"]) ** 2
-    invariants_approached["I_13ap"] = 0.5 * I["I_4"] ** 2
-    invariants_approached["I_14ap"] = 0.25 * I["I_4"] ** 2
+    invariants_approached["I_13ap"] = (1 / 2) * I["I_4"] ** 2
+    invariants_approached["I_14ap"] = (1 / 4) * I["I_4"] ** 2
     invariants_approached["I_15ap"] = (1 / 8) * I["I_4"] ** 3
-    liste_invariants_approcher = []
+    list_invariants_approached = []
 
     for i in range(18):
-        liste_invariants_approcher.append("")
+        list_invariants_approached.append("")
         for key in invariants_approached:
             if key == f"I_{i + 1}ap":
-                liste_invariants_approcher[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
+                list_invariants_approached[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
 
     distance_by_invariant = {}
     if invariants_approached["I_2ap"] != 0:
@@ -180,13 +171,13 @@ def Distance_Isotropic(I: dict = {"I": 0}):
     On calcul les résidus pour chaque invariant et on en déduis la distance par rapport à la classe isotrope
      """
 
-    liste_distance_by_invariant = []
+    list_distance_by_invariant = []
 
     for i in range(18):
-        liste_distance_by_invariant.append("")
+        list_distance_by_invariant.append("")
         for key in distance_by_invariant:
             if key == f"dI_{i + 1}":
-                liste_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
+                list_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
 
     "On calcul maintenant la distance par rapport à la classe isotrope"
     distance_to_isotropic = 0
@@ -195,12 +186,13 @@ def Distance_Isotropic(I: dict = {"I": 0}):
 
     distance_to_isotropic = round(sqrt(distance_to_isotropic), 6)
 
-    return distance_to_isotropic, liste_invariants_approcher, liste_distance_by_invariant
+    return distance_to_isotropic, list_invariants_approached, list_distance_by_invariant
 
 
 def Distance_Cubic(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I: dict
+    :return: distance_to_cubic, list_invariants_approached, list_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -216,13 +208,13 @@ def Distance_Cubic(I: dict = {"I": 0}):
     """
 
     invariants_approached["I_2ap"] = 2 * I["I_1"]
-    invariants_approached["I_3ap"] = 0.5 * I["I_4"]
+    invariants_approached["I_3ap"] = (1 / 2) * I["I_4"]
     invariants_approached["I_10ap"] = 2 * I["I_1"] ** 2 + I["I_6"]
-    invariants_approached["I_11ap"] = I["I_1"] ** 2 - 0.5 * I["I_6"]
+    invariants_approached["I_11ap"] = I["I_1"] ** 2 - (1 / 2) * I["I_6"]
     invariants_approached["I_12ap"] = I["I_1"] ** 3 + (1 / sqrt(2)) * I["I_6"] ** (3 / 2) - (3 / 2) * I["I_1"] * I[
         "I_6"]
-    invariants_approached["I_13ap"] = 0.5 * I["I_4"] ** 2
-    invariants_approached["I_14ap"] = 0.25 * I["I_4"] ** 2
+    invariants_approached["I_13ap"] = (1 / 2) * I["I_4"] ** 2
+    invariants_approached["I_14ap"] = (1 / 4) * I["I_4"] ** 2
     invariants_approached["I_15ap"] = (1 / 8) * I["I_4"] ** 3
 
     """
@@ -269,19 +261,19 @@ def Distance_Cubic(I: dict = {"I": 0}):
     else:
         distance_by_invariant["dI_15"] = 0
 
-    liste_invariants_approcher = []
+    list_invariants_approached = []
     for i in range(18):
-        liste_invariants_approcher.append("")
+        list_invariants_approached.append("")
         for key in invariants_approached:
             if key == f"I_{i + 1}ap":
-                liste_invariants_approcher[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
+                list_invariants_approached[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
 
-    liste_distance_by_invariant = []
+    list_distance_by_invariant = []
     for i in range(18):
-        liste_distance_by_invariant.append("")
+        list_distance_by_invariant.append("")
         for key in distance_by_invariant:
             if key == f"dI_{i + 1}":
-                liste_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
+                list_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
 
     "On calcul maintenant la distance par rapport à la classe cubic"
     distance_to_cubic = 0
@@ -290,12 +282,13 @@ def Distance_Cubic(I: dict = {"I": 0}):
 
     distance_to_cubic = round(sqrt(distance_to_cubic), 6)
 
-    return distance_to_cubic, liste_invariants_approcher, liste_distance_by_invariant
+    return distance_to_cubic, list_invariants_approached, list_distance_by_invariant
 
 
 def Distance_Hexagonale(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I:  dict
+    :return:  distance_to_hexagonal, list_invariants_approached, list_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -312,8 +305,8 @@ def Distance_Hexagonale(I: dict = {"I": 0}):
 
     invariants_approached["I_12ap"] = (I["I_2"] - I["I_1"]) * (I["I_1"] ** 2 - (I["I_1"] - 2 * I["I_3"]) ** 2) - 4 * I[
         "I_3"] * (I["I_6"] - (I["I_1"] - 2 * I["I_3"]) ** 2)
-    invariants_approached["I_13ap"] = 0.5 * I["I_4"] ** 2
-    invariants_approached["I_14ap"] = 0.25 * I["I_4"] ** 2
+    invariants_approached["I_13ap"] = (1 / 2) * I["I_4"] ** 2
+    invariants_approached["I_14ap"] = (1 / 4) * I["I_4"] ** 2
     invariants_approached["I_15ap"] = (1 / 4) * I["I_3"] * I["I_4"] ** 2
 
     """
@@ -341,19 +334,19 @@ def Distance_Hexagonale(I: dict = {"I": 0}):
     else:
         distance_by_invariant["dI_15"] = 0
 
-    liste_invariants_approcher = []
+    list_invariants_approached = []
     for i in range(18):
-        liste_invariants_approcher.append("")
+        list_invariants_approached.append("")
         for key in invariants_approached:
             if key == f"I_{i + 1}ap":
-                liste_invariants_approcher[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
+                list_invariants_approached[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
 
-    liste_distance_by_invariant = []
+    list_distance_by_invariant = []
     for i in range(18):
-        liste_distance_by_invariant.append("")
+        list_distance_by_invariant.append("")
         for key in distance_by_invariant:
             if key == f"dI_{i + 1}":
-                liste_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
+                list_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
 
     "On calcul maintenant la distance par rapport à la classe hexagonale"
     distance_to_hexagonal = 0
@@ -362,12 +355,13 @@ def Distance_Hexagonale(I: dict = {"I": 0}):
 
     distance_to_hexagonal = round(sqrt(distance_to_hexagonal), 6)
 
-    return distance_to_hexagonal, liste_invariants_approcher, liste_distance_by_invariant
+    return distance_to_hexagonal, list_invariants_approached, list_distance_by_invariant
 
 
 def Distance_Tetragonale(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I: dict
+    :return:  distance_to_tetragonal, list_invariants_approached, list_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -383,8 +377,8 @@ def Distance_Tetragonale(I: dict = {"I": 0}):
     """
 
     invariants_approached["I_9ap"] = I["I_5"] ** 2
-    invariants_approached["I_13ap"] = 0.5 * I["I_4"] ** 2
-    invariants_approached["I_14ap"] = 0.25 * I["I_4"] ** 2
+    invariants_approached["I_13ap"] = (1 / 2) * I["I_4"] ** 2
+    invariants_approached["I_14ap"] = (1 / 4) * I["I_4"] ** 2
     invariants_approached["I_15ap"] = (1 / 4) * I["I_3"] * I["I_4"] ** 2
 
     """
@@ -411,19 +405,19 @@ def Distance_Tetragonale(I: dict = {"I": 0}):
     else:
         distance_by_invariant["dI_15"] = 0
 
-    liste_invariants_approcher = []
+    list_invariants_approached = []
     for i in range(18):
-        liste_invariants_approcher.append("")
+        list_invariants_approached.append("")
         for key in invariants_approached:
             if key == f"I_{i + 1}ap":
-                liste_invariants_approcher[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
+                list_invariants_approached[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
 
-    liste_distance_by_invariant = []
+    list_distance_by_invariant = []
     for i in range(18):
-        liste_distance_by_invariant.append("")
+        list_distance_by_invariant.append("")
         for key in distance_by_invariant:
             if key == f"dI_{i + 1}":
-                liste_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
+                list_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
 
     "On calcul maintenant la distance par rapport à la classe tétragonale"
     distance_to_tetragonal = 0
@@ -432,12 +426,13 @@ def Distance_Tetragonale(I: dict = {"I": 0}):
 
     distance_to_tetragonal = round(sqrt(distance_to_tetragonal), 6)
 
-    return distance_to_tetragonal, liste_invariants_approcher, liste_distance_by_invariant
+    return distance_to_tetragonal, list_invariants_approached, list_distance_by_invariant
 
 
 def Distance_Trigonale(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I: dict
+    :return: distance_to_trigonal, liste_invariants_approcher, liste_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -452,9 +447,10 @@ def Distance_Trigonale(I: dict = {"I": 0}):
     Les valeurs de ces invaraints approchés sont ajouter au dictionnaire invariants_approached
     """
     invariants_approached["I_7ap"] = (I["I_7"] + I["I_8"] + I["I_16"])/3
-    invariants_approached["I_13ap"] = 0.5 * I["I_4"] ** 2
-    invariants_approached["I_14ap"] = 0.25 * I["I_4"] ** 2
-    invariants_approached["I_15ap"] = (1 / 4) * I["I_3"] * I["I_4"] ** 2 - 0.5 * I["I_4"] * I["I_7"]
+    invariants_approached["I_13ap"] = (1 / 2) * I["I_4"] ** 2
+    invariants_approached["I_14ap"] = (1 / 4) * I["I_4"] ** 2
+    invariants_approached["I_15ap"] = (1 / 4) * I["I_3"] * I["I_4"] ** 2 - (1 / 2) * I["I_4"] * I["I_7"]
+
 
     """
     On calcul les résidus pour chaque invariant et on en déduis la distance par rapport à la classe trigonale
@@ -463,14 +459,14 @@ def Distance_Trigonale(I: dict = {"I": 0}):
 
     if invariants_approached["I_7ap"] != 0:
         distance_by_invariant["dI_7"] = (I["I_7"] - invariants_approached["I_7ap"]) / invariants_approached["I_7ap"]
+        distance_by_invariant["dI_8"] = (I["I_8"] - invariants_approached["I_7ap"]) / invariants_approached["I_7ap"]
+        distance_by_invariant["dI_16"] = (I["I_16"] - invariants_approached["I_7ap"]) / invariants_approached["I_7ap"]
     else:
         distance_by_invariant["dI_7"] = 0
-
     if invariants_approached["I_13ap"] != 0:
         distance_by_invariant["dI_13"] = (I["I_13"] - invariants_approached["I_13ap"]) / invariants_approached["I_13ap"]
     else:
         distance_by_invariant["dI_13"] = 0
-
     if invariants_approached["I_14ap"] != 0:
         distance_by_invariant["dI_14"] = (I["I_14"] - invariants_approached["I_14ap"]) / invariants_approached["I_14ap"]
     else:
@@ -507,7 +503,8 @@ def Distance_Trigonale(I: dict = {"I": 0}):
 
 def Distance_Orthotropic(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I: dict
+    :return: distance_to_orthotropic, list_invariants_approached, list_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -548,26 +545,27 @@ def Distance_Orthotropic(I: dict = {"I": 0}):
 
     distance_to_orthotropic = round(sqrt(distance_to_orthotropic), 6)
 
-    liste_invariants_approcher = []
+    list_invariants_approached = []
     for i in range(18):
-        liste_invariants_approcher.append("")
+        list_invariants_approached.append("")
         for key in invariants_approached:
             if key == f"I_{i + 1}ap":
-                liste_invariants_approcher[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
+                list_invariants_approached[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
 
-    liste_distance_by_invariant = []
+    list_distance_by_invariant = []
     for i in range(18):
-        liste_distance_by_invariant.append("")
+        list_distance_by_invariant.append("")
         for key in distance_by_invariant:
             if key == f"dI_{i + 1}":
-                liste_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
+                list_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
 
-    return distance_to_orthotropic, liste_invariants_approcher, liste_distance_by_invariant
+    return distance_to_orthotropic, list_invariants_approached, list_distance_by_invariant
 
 
 def Distance_Monoclinic(I: dict = {"I": 0}):
     """
-    :type I: Un dictionnaire contenant les invariants en key (I_i) et leurs valeurs associées
+    :param I: dict
+    :return: distance_to_monoclinic, list_invariants_approached, list_distance_by_invariant
     """
     if type(I) != dict:
         error = f"Le type de variable que vous devez fournir est < class dict>', en lieu vous avez fourni {type(I)}"
@@ -608,25 +606,29 @@ def Distance_Monoclinic(I: dict = {"I": 0}):
 
     distance_to_monoclinic = round(sqrt(distance_to_monoclinic), 6)
 
-    liste_invariants_approcher = []
+    list_invariants_approached = []
     for i in range(18):
-        liste_invariants_approcher.append("")
+        list_invariants_approached.append("")
         for key in invariants_approached:
             if key == f"I_{i + 1}ap":
-                liste_invariants_approcher[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
+                list_invariants_approached[i] = round(invariants_approached[f"I_{i + 1}ap"], 6)
 
-    liste_distance_by_invariant = []
+    list_distance_by_invariant = []
     for i in range(18):
-        liste_distance_by_invariant.append("")
+        list_distance_by_invariant.append("")
         for key in distance_by_invariant:
             if key == f"dI_{i + 1}":
-                liste_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
+                list_distance_by_invariant[i] = round(distance_by_invariant[key], 6)
 
-    return distance_to_monoclinic, liste_invariants_approcher, liste_distance_by_invariant
+    return distance_to_monoclinic, list_invariants_approached, list_distance_by_invariant
 
 def rechercher_les_invariants_nulls(I:dict, precision: int):
+    """
+    :param I: dict
+    :param precision: float
+    :return: list_invariants_nulls
+    """
     list_invariants_nulls = []
-    """ Vérifier les invariants nulls"""
 
     invariant_a_verifier = ["I_5", "I_7", "I_8", "I_9", "I_16", "I_17", "I_18"]
     invariants_premieD = ["I_1", "I_2", "I_3", "I_4", "I_5"]
@@ -661,7 +663,12 @@ def rechercher_les_invariants_nulls(I:dict, precision: int):
     return list_invariants_nulls
 
 def classification_du_materiau(Invariants_nulls : list, Residus:list, classes: list):
-
+    """
+    :param Invariants_nulls: list
+    :param Residus: list
+    :param classes: list
+    :return: classe_du_materiau
+    """
     classes_residus_G = {}
 
     i_g1 = 0
@@ -700,7 +707,7 @@ def classification_du_materiau(Invariants_nulls : list, Residus:list, classes: l
 
 
 """
-programme de calcul des distances
+programme de calcul des distances et exportation des résltats dans un fichier excel
 """
 file=True
 
@@ -715,7 +722,7 @@ if file==True:
     distances_to_orthotropic = Distance_Orthotropic(Invariant_P8)
     distances_to_monoclinic = Distance_Monoclinic(Invariant_P8)
 
-    #___________________________arrangement des données et etiquetage________________________________________________________________________________
+    #___________________________arrangement des données et etiquetage__________________________________________________
     list_invariants = ["I_1", "I_2", "I_3", "I_4", "I_5", "I_6", "I_7", "I_8", "I_9", "I_10", "I_11", "I_12", "I_13",
                        "I_14", "I_15", "I_16", "I_17", "I_18"]
     list_invariants_calculer = []
@@ -874,4 +881,4 @@ if file==True:
     sheet1.write(36, 1, "Distance")
     sheet1.write(36, 2, distance_to_mono)
 
-    wb.save("data_global_academic_EXACADEMIC_CBIC_genericV01.xls")
+    wb.save(f"data_global_{materiau}_V04.xls")
